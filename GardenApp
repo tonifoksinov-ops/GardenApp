@@ -85,6 +85,8 @@ namespace GardenApp
     {
         public const string Category = "Дерево";
 
+        private const int FruitfulAge = 5;
+
         private int _age;
 
         public int Age
@@ -102,13 +104,14 @@ namespace GardenApp
         public Tree() : base()
         {
             _age = 1;
-            HasHarvest = true;
+            HasHarvest = false;
         }
+
 
         public Tree(Height height, TreeType type, int age) : base(height, type)
         {
             Age = age;
-            HasHarvest = true;
+            HasHarvest = age >= FruitfulAge && type != TreeType.Pine;
         }
 
         public string CollectHarvest()
@@ -184,7 +187,7 @@ namespace GardenApp
 
     public class Garden : IGarden
     {
-        private readonly List<Plant> _plants = new List<Plant>(); 
+        private readonly List<Plant> _plants = new List<Plant>();
 
         public int Count => _plants.Count;
 
@@ -203,13 +206,12 @@ namespace GardenApp
                 Console.WriteLine("Сад пуст.");
                 return;
             }
-            Console.WriteLine("///// Растения в саду /////");
+            Console.WriteLine("      Растения в саду      ");
             for (int i = 0; i < _plants.Count; i++)
                 Console.WriteLine($"{i + 1}. {_plants[i].GetInfo()}");
         }
     }
 
-  
     class Program
     {
         static readonly Garden garden = new Garden();
@@ -220,7 +222,7 @@ namespace GardenApp
 
             while (true)
             {
-                Console.WriteLine("\n///// МЕНЮ /////");
+                Console.WriteLine("\n      МЕНЮ      ");
                 Console.WriteLine("1. Создать дерево");
                 Console.WriteLine("2. Создать кустарник");
                 Console.WriteLine("3. Показать растения сада");
