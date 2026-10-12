@@ -1,0 +1,357 @@
+using System;
+using System.Collections.Generic;
+
+namespace GardenApp
+{
+    public enum TreeType { WiseOak, Pine, Sakura, Maple }
+
+    public static class TreeTypeExt
+    {
+        public static string Ru(this TreeType t) => t switch
+        {
+            TreeType.WiseOak => "Мудрый дуб",
+            TreeType.Pine => "Сосна",
+            TreeType.Sakura => "Сакура",
+            TreeType.Maple => "Клён",
+            _ => t.ToString()
+        };
+    }
+
+    public struct Height
+    {
+        private double _meters;
+
+        public double Meters
+        {
+            get => _meters;
+            set
+            {
+                if (value < 0) throw new ArgumentException("Высота не может быть отрицательной.");
+                _meters = value;
+            }
+        }
+
+        public Height(double meters)
+        {
+            _meters = 0;
+            Meters = meters;
+        }
+
+        public override string ToString() => $"{_meters:F2} м";
+    }
+
+    public abstract class Plant
+    {
+        private Height _height;
+        private TreeType _type;
+
+        public Height Height
+        {
+            get => _height;
+            set => _height = value;
+        }
+
+        public TreeType Type
+        {
+            get => _type;
+            set => _type = value;
+        }
+
+        protected Plant()
+        {
+            _height = new Height(1);
+            _type = TreeType.WiseOak;
+        }
+
+        protected Plant(Height height, TreeType type)
+        {
+            _height = height;
+            _type = type;
+        }
+
+        public void Deconstruct(out Height height, out TreeType type)
+        {
+            height = _height;
+            type = _type;
+        }
+
+        public abstract string GetInfo();
+
+        public override string ToString() =>
+            $"{GetType().Name}: Тип={_type.Ru()}, Высота={_height}";
+    }
+
+    public class Tree : Plant
+    {
+        public const string Category = "Дерево";
+
+        private int _age;
+
+        public int Age
+        {
+            get => _age;
+            set
+            {
+                if (value < 0) throw new ArgumentException("Возраст не может быть отрицательным.");
+                _age = value;
+            }
+        }
+
+        public bool HasHarvest { get; private set; }
+
+        public Tree() : base()
+        {
+            _age = 1;
+            HasHarvest = true;
+        }
+
+        public Tree(Height height, TreeType type, int age) : base(height, type)
+        {
+            Age = age;
+            HasHarvest = true;
+        }
+
+        public string CollectHarvest()
+        {
+            if (!HasHarvest) return "Урожай уже собран.";
+            HasHarvest = false;
+            return $"Собран урожай с дерева типа {Type.Ru()}.";
+        }
+
+        public string TakeCare() => $"Дерево {Type.Ru()} полито и удобрено.";
+
+        public string CutDown()
+        {
+            Height = new Height(0);
+            Age = 0;
+            HasHarvest = false;
+            return "Дерево срезано.";
+        }
+
+        public string TouchToMusic(string music) =>
+            $"Вы трогаете {Type.Ru()} дерево под вдохновляющую музыку: \"{music}\"";
+
+        public static bool operator ==(Tree a, Tree b)
+        {
+            if (ReferenceEquals(a, b)) return true;
+            if (a is null || b is null) return false;
+            return a.Type == b.Type
+                && a.Age == b.Age
+                && Math.Abs(a.Height.Meters - b.Height.Meters) < 1e-9;
+        }
+
+        public static bool operator !=(Tree a, Tree b) => !(a == b);
+
+        public override bool Equals(object obj) => obj is Tree t && this == t;
+
+        public override int GetHashCode() => HashCode.Combine(Type, Age, Height.Meters);
+
+        public static Tree operator +(Tree t, int years)
+        {
+            if (t is null) throw new ArgumentNullException(nameof(t));
+            return new Tree(t.Height, t.Type, t.Age + years);
+        }
+
+        public override string ToString() =>
+            base.ToString() + $", Возраст={_age}, Урожай={(HasHarvest ? "есть" : "нет")}";
+
+        public override string GetInfo() => ToString();
+    }
+
+    public class Shrub : Plant
+    {
+        public Shrub() : base() { }
+
+        public Shrub(Height height, TreeType type) : base(height, type) { }
+
+        public string Grow(double delta)
+        {
+            if (delta <= 0) return "Рост должен быть положительным.";
+            Height = new Height(Height.Meters + delta);
+            return $"Кустарник вырос до {Height}.";
+        }
+
+        public override string GetInfo() =>
+            $"Кустарник: Тип={Type.Ru()}, Высота={Height}";
+
+        public override string ToString() => GetInfo();
+    }
+
+    public interface IGarden
+    {
+        void ShowPlants();
+    }
+
+    public class Garden : IGarden
+    {
+        private readonly List<Plant> _plants = new List<Plant>(); 
+
+        public int Count => _plants.Count;
+
+        public Plant this[int index]
+        {
+            get => _plants[index];
+            set => _plants[index] = value;
+        }
+
+        public void AddPlant(Plant p) => _plants.Add(p);
+
+        public void ShowPlants()
+        {
+            if (_plants.Count == 0)
+            {
+                Console.WriteLine("Сад пуст.");
+                return;
+            }
+            Console.WriteLine("///// Растения в саду /////");
+            for (int i = 0; i < _plants.Count; i++)
+                Console.WriteLine($"{i + 1}. {_plants[i].GetInfo()}");
+        }
+    }
+
+  
+    class Program
+    {
+        static readonly Garden garden = new Garden();
+
+        static void Main()
+        {
+            Console.OutputEncoding = System.Text.Encoding.UTF8;
+
+            while (true)
+            {
+                Console.WriteLine("\n///// МЕНЮ /////");
+                Console.WriteLine("1. Создать дерево");
+                Console.WriteLine("2. Создать кустарник");
+                Console.WriteLine("3. Показать растения сада");
+                Console.WriteLine("4. Действия с деревом");
+                Console.WriteLine("5. Действия с кустарником");
+                Console.WriteLine("0. Выход");
+                Console.Write("Выбор: ");
+
+                string choice = Console.ReadLine();
+
+                try
+                {
+                    switch (choice)
+                    {
+                        case "1": CreateTree(); break;
+                        case "2": CreateShrub(); break;
+                        case "3": garden.ShowPlants(); break;
+                        case "4": TreeActions(); break;
+                        case "5": ShrubActions(); break;
+                        case "0": return;
+                        default: Console.WriteLine("Неверный пункт."); break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Ошибка: {ex.Message}");
+                }
+            }
+        }
+
+        static TreeType ReadTreeType()
+        {
+            Console.WriteLine("Типы:");
+            Console.WriteLine("  0 - Мудрый дуб");
+            Console.WriteLine("  1 - Сосна");
+            Console.WriteLine("  2 - Сакура");
+            Console.WriteLine("  3 - Клён");
+            Console.Write("Выбор типа: ");
+            int t = int.Parse(Console.ReadLine());
+            if (t < 0 || t > 3) throw new ArgumentException("Неверный тип дерева.");
+            return (TreeType)t;
+        }
+
+        static void CreateTree()
+        {
+            Console.Write("Высота (м): ");
+            double h = double.Parse(Console.ReadLine());
+            TreeType type = ReadTreeType();
+            Console.Write("Возраст (лет): ");
+            int age = int.Parse(Console.ReadLine());
+
+            var tree = new Tree(new Height(h), type, age);
+            garden.AddPlant(tree);
+            Console.WriteLine("Дерево создано: " + tree);
+        }
+
+        static void CreateShrub()
+        {
+            Console.Write("Высота (м): ");
+            double h = double.Parse(Console.ReadLine());
+            TreeType type = ReadTreeType();
+
+            var shrub = new Shrub(new Height(h), type);
+            garden.AddPlant(shrub);
+            Console.WriteLine("Кустарник создан: " + shrub);
+        }
+
+        static Tree SelectTree()
+        {
+            var trees = new List<Tree>();
+            for (int i = 0; i < garden.Count; i++)
+                if (garden[i] is Tree t) trees.Add(t);
+
+            if (trees.Count == 0)
+            {
+                Console.WriteLine("Нет деревьев в саду.");
+                return null;
+            }
+
+            for (int i = 0; i < trees.Count; i++)
+                Console.WriteLine($"{i + 1}. {trees[i]}");
+
+            Console.Write("Выберите дерево: ");
+            return trees[int.Parse(Console.ReadLine()) - 1];
+        }
+
+        static void TreeActions()
+        {
+            Tree tree = SelectTree();
+            if (tree == null) return;
+
+            Console.WriteLine("1. Собрать урожай");
+            Console.WriteLine("2. Позаботиться");
+            Console.WriteLine("3. Срезать дерево");
+            Console.WriteLine("4. Потрогать под вдохновляющую музыку");
+            Console.Write("Выбор: ");
+
+            switch (Console.ReadLine())
+            {
+                case "1": Console.WriteLine(tree.CollectHarvest()); break;
+                case "2": Console.WriteLine(tree.TakeCare()); break;
+                case "3": Console.WriteLine(tree.CutDown()); break;
+                case "4":
+                    Console.Write("Название музыки: ");
+                    Console.WriteLine(tree.TouchToMusic(Console.ReadLine()));
+                    break;
+                default: Console.WriteLine("Неверный пункт."); break;
+            }
+        }
+
+        static void ShrubActions()
+        {
+            var shrubs = new List<Shrub>();
+            for (int i = 0; i < garden.Count; i++)
+                if (garden[i] is Shrub s) shrubs.Add(s);
+
+            if (shrubs.Count == 0)
+            {
+                Console.WriteLine("Нет кустарников в саду.");
+                return;
+            }
+
+            for (int i = 0; i < shrubs.Count; i++)
+                Console.WriteLine($"{i + 1}. {shrubs[i]}");
+
+            Console.Write("Выберите кустарник: ");
+            var shrub = shrubs[int.Parse(Console.ReadLine()) - 1];
+
+            Console.Write("На сколько метров вырастить: ");
+            double d = double.Parse(Console.ReadLine());
+            Console.WriteLine(shrub.Grow(d));
+        }
+    }
+}
