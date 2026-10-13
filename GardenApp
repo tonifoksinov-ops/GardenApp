@@ -84,7 +84,6 @@ namespace GardenApp
     public class Tree : Plant
     {
         public const string Category = "Дерево";
-
         private const int FruitfulAge = 5;
 
         private int _age;
@@ -107,7 +106,6 @@ namespace GardenApp
             HasHarvest = false;
         }
 
-
         public Tree(Height height, TreeType type, int age) : base(height, type)
         {
             Age = age;
@@ -128,11 +126,11 @@ namespace GardenApp
             Height = new Height(0);
             Age = 0;
             HasHarvest = false;
-            return "Дерево срезано.";
+            return $"Дерево {Type.Ru()} срезано.";
         }
 
         public string TouchToMusic(string music) =>
-            $"Вы трогаете {Type.Ru()} дерево под вдохновляющую музыку: \"{music}\"";
+            $"Вы трогаете {Type.Ru()}  под вдохновляющую музыку: \"{music}\"";
 
         public static bool operator ==(Tree a, Tree b)
         {
@@ -199,6 +197,9 @@ namespace GardenApp
 
         public void AddPlant(Plant p) => _plants.Add(p);
 
+        // удаление растения из сада
+        public bool RemovePlant(Plant p) => _plants.Remove(p);
+
         public void ShowPlants()
         {
             if (_plants.Count == 0)
@@ -206,7 +207,7 @@ namespace GardenApp
                 Console.WriteLine("Сад пуст.");
                 return;
             }
-            Console.WriteLine("      Растения в саду      ");
+            Console.WriteLine("=== Растения в саду ===");
             for (int i = 0; i < _plants.Count; i++)
                 Console.WriteLine($"{i + 1}. {_plants[i].GetInfo()}");
         }
@@ -222,7 +223,7 @@ namespace GardenApp
 
             while (true)
             {
-                Console.WriteLine("\n      МЕНЮ      ");
+                Console.WriteLine("\n===== МЕНЮ =====");
                 Console.WriteLine("1. Создать дерево");
                 Console.WriteLine("2. Создать кустарник");
                 Console.WriteLine("3. Показать растения сада");
@@ -324,11 +325,18 @@ namespace GardenApp
             {
                 case "1": Console.WriteLine(tree.CollectHarvest()); break;
                 case "2": Console.WriteLine(tree.TakeCare()); break;
-                case "3": Console.WriteLine(tree.CutDown()); break;
+
+                case "3":
+                    Console.WriteLine(tree.CutDown());
+                    garden.RemovePlant(tree);           //  удаление из сада
+                    Console.WriteLine("(дерево убрано из сада)");
+                    break;
+
                 case "4":
                     Console.Write("Название музыки: ");
                     Console.WriteLine(tree.TouchToMusic(Console.ReadLine()));
                     break;
+
                 default: Console.WriteLine("Неверный пункт."); break;
             }
         }
