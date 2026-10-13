@@ -207,7 +207,7 @@ namespace GardenApp
                 Console.WriteLine("Сад пуст.");
                 return;
             }
-            Console.WriteLine("=== Растения в саду ===");
+            Console.WriteLine("      Растения в саду      ");
             for (int i = 0; i < _plants.Count; i++)
                 Console.WriteLine($"{i + 1}. {_plants[i].GetInfo()}");
         }
@@ -223,7 +223,7 @@ namespace GardenApp
 
             while (true)
             {
-                Console.WriteLine("\n===== МЕНЮ =====");
+                Console.WriteLine("\n      МЕНЮ      ");
                 Console.WriteLine("1. Создать дерево");
                 Console.WriteLine("2. Создать кустарник");
                 Console.WriteLine("3. Показать растения сада");
